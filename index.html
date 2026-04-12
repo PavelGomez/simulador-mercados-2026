@@ -522,6 +522,8 @@ hr.sep {
         <div class="kpi"><div class="label">Precio de equilibrio</div><div id="simP" class="value"></div></div>
         <div class="kpi"><div class="label">Cantidad de equilibrio</div><div id="simQ" class="value"></div></div>
       </div>
+      <!-- ── Panel de mecanismo del caso ──────────────────────────── -->
+      <div id="simMechanismPanel" style="display:none;margin-top:14px;"></div>
       <!-- ── Panel de reespecificación analítica ──────────────────── -->
       <div id="simRespecPanel" style="margin-top:14px;"></div>
       <!-- PANEL ELASTICIDADES: Simulador -->
@@ -1222,6 +1224,55 @@ function renderCmpElasticities(e0, e1) {
   });
 }
 
+// Panel de mecanismo del caso activo:
+// muestra la secuencia causal (shock → curva → equilibrio) solo cuando hay un caso cargado.
+function renderMechanismPanel(p, m) {
+  const el = $('simMechanismPanel');
+  if (!el) return;
+
+  if (!activeCaseId) { el.style.display = 'none'; el.innerHTML = ''; return; }
+
+  const c = caseLibrary.find(c => c.id === activeCaseId);
+  if (!c || !c.shock) { el.style.display = 'none'; el.innerHTML = ''; return; }
+
+  const demandKeys = new Set(['Y','Ps','Pc','Exp']);
+  const [k, vPost] = Object.entries(c.shock)[0];
+  const isDemand   = demandKeys.has(k);
+  const mPost      = computeMarket({...p, [k]: vPost});
+  const intBefore  = isDemand ? m.A : m.C;
+  const intAfter   = isDemand ? mPost.A : mPost.C;
+  const goesRight  = intAfter > intBefore;
+  const curvaLabel = isDemand ? 'Demanda' : 'Oferta';
+  const dirLabel   = goesRight ? 'derecha ↗' : 'izquierda ↙';
+
+  const deltaP = mPost.eqP - m.eqP;
+  const deltaQ = mPost.eqQ - m.eqQ;
+  const sign   = (n) => n >= 0 ? '+' : '';
+  const pUp    = deltaP > 0;
+  const qUp    = deltaQ > 0;
+  const reading = `${curvaLabel} ${goesRight ? 'crece' : 'cae'}: P* ${pUp ? 'sube' : 'baja'} y Q* ${qUp ? 'sube' : 'baja'}.`;
+
+  const row = (lbl, val) =>
+    `<div style="display:flex;gap:12px;padding:5px 0;font-size:13px;border-bottom:1px solid var(--line);">` +
+    `<span style="min-width:90px;font-weight:700;color:var(--muted);flex-shrink:0;">${lbl}</span>` +
+    `<span>${val}</span></div>`;
+
+  el.style.display = 'block';
+  el.innerHTML =
+    `<div class="table-title">Mecanismo del caso</div>` +
+    row('Shock',
+        `<strong>${k}</strong>: ${fmt(p[k])} → ${fmt(vPost)}`) +
+    row('Curva',
+        `${curvaLabel} — se desplaza a la <strong>${dirLabel}</strong>`) +
+    row('Equilibrio',
+        `<span style="font-family:monospace;">` +
+        `P*: ${fmt(m.eqP)} → ${fmt(mPost.eqP)} &ensp; Q*: ${fmt(m.eqQ)} → ${fmt(mPost.eqQ)}</span><br>` +
+        `<span style="font-family:monospace;color:var(--muted);">` +
+        `ΔP = ${sign(deltaP)}${fmt(deltaP)} &ensp; ΔQ = ${sign(deltaQ)}${fmt(deltaQ)}</span>`) +
+    row('Lectura',
+        `<span style="color:var(--muted);font-style:italic;">${reading}</span>`);
+}
+
 // Panel de reespecificación analítica:
 // muestra cómo la función estructural colapsa en la curva efectiva del plano P-Q.
 function renderRespecPanel(p, m) {
@@ -1307,6 +1358,7 @@ function updateSim() {
   $('simSupplyEq').textContent = `Qs = ${fmt(m.C)} + ${fmt(m.D)}·P`;
   $('simP').textContent = fmt(m.eqP);
   $('simQ').textContent = fmt(m.eqQ);
+  renderMechanismPanel(p, m);
   renderRespecPanel(p, m);
 
   $('baseDemandEq').textContent = $('simDemandEq').textContent;
