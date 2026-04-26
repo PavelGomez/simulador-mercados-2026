@@ -1182,7 +1182,7 @@ window.MercaLabI18n = window.MercaLabI18n || { es: {}, en: {} };
 
 window.MercaLabI18n.es.politica = {
   titulo: "Casos de política pública",
-  intro: "Cada caso parte del modelo competitivo lineal y observa qué predice ante una intervención de política. Los dos primeros (impuesto y subsidio) son shocks paramétricos que el modelo resuelve con un nuevo equilibrio. Los dos siguientes (salario mínimo, control de precios) son restricciones al equilibrio: el modelo no produce un equilibrio nuevo, sino un desequilibrio. Esa diferencia es ya parte de la lectura.",
+  intro: "Cada caso parte del modelo competitivo lineal y observa qué predice ante una intervención de política. Los dos primeros (impuesto y subsidio) son shocks paramétricos que el modelo resuelve con un nuevo equilibrio. Los dos siguientes (salario mínimo, control de precios) son restricciones al equilibrio: el modelo no produce un equilibrio nuevo, sino un desequilibrio. Esa diferencia es ya parte de la lectura. Cada caso usa una calibración propia: las funciones de demanda y oferta se eligen para que el mercado tenga elasticidades realistas y los equilibrios caigan en números redondos. Las funciones exactas y la verificación algebraica están en el bloque desplegable bajo cada tabla.",
   supuestoLabels: {
     "precio-aceptacion": "Precio-aceptación",
     "informacion-perfecta": "Información perfecta",
@@ -1201,7 +1201,8 @@ window.MercaLabI18n.es.politica = {
         { id: "sin-externalidades", nota: "doble lectura: incidencia tributaria pura y/o corrección pigouviana" }
       ],
       base: { alpha0: 80, alpha1: 1, beta0: -20, beta1: 4 },
-      parametros: { impuesto: 5 }
+      parametros: { impuesto: 5 },
+      funciones: "Demanda:  Qd = 80 − P\nOferta:   Qs = −20 + 4P\nEquilibrio base:  80 − P = −20 + 4P  →  P* = 20, Q* = 60\nCon t = 5 (cuña Pc − Pp = t):\n  80 − Pc = −20 + 4(Pc − 5)  →  Pc = 24, Pp = 19, Q = 56\nIncidencia consumidor = ε_s / (ε_s − ε_d) = (4/3) / (5/3) = 80%\nRecaudación:  R = Q · t = 56 · 5 = 280\nε_d = −1·(20/60) = −0.33     ε_s = +4·(20/60) = +1.33"
     },
     {
       id: "salario-minimo",
@@ -1214,6 +1215,7 @@ window.MercaLabI18n.es.politica = {
       ],
       base: { alpha0: 100, alpha1: 2, beta0: -10, beta1: 3 },
       parametros: { precioPiso: 28 },
+      funciones: "Demanda laboral:  L^d = 100 − 2w\nOferta laboral:   L^s = −10 + 3w\nEquilibrio libre:  100 − 2w = −10 + 3w  →  w* = 22, L* = 56\nCon w_min = 28 (vinculante: > w*):\n  L^d(28) = 100 − 56 = 44   (lado corto)\n  L^s(28) = −10 + 84 = 74\n  Empleo = L^d = 44     Desempleo = L^s − L^d = 30\nε_d = −2·(22/56) = −0.79     ε_s = +3·(22/56) = +1.18",
       evidencia: {
         titulo: "Predicción del modelo vs. evidencia empírica",
         cuerpo: [
@@ -1241,7 +1243,8 @@ window.MercaLabI18n.es.politica = {
         { id: "sin-externalidades", nota: "subsidio en tensión con externalidades ambientales locales" }
       ],
       base: { alpha0: 50, alpha1: 1, beta0: -10, beta1: 2 },
-      parametros: { subsidio: 6 }
+      parametros: { subsidio: 6 },
+      funciones: "Demanda:  Qd = 50 − P\nOferta:   Qs = −10 + 2P\nEquilibrio base:  50 − P = −10 + 2P  →  P* = 20, Q* = 30\nCon s = 6 (productor recibe Pc + s):\n  50 − Pc = −10 + 2(Pc + 6)  →  Pc = 16, Pp = 22, Q = 34\nCosto fiscal:  C = Q · s = 34 · 6 = 204\nε_d = −1·(20/30) = −0.67     ε_s = +2·(20/30) = +1.33"
     },
     {
       id: "control-precios-pan",
@@ -1252,7 +1255,8 @@ window.MercaLabI18n.es.politica = {
         { id: "costos-de-transaccion-nulos", nota: "racionamiento, colas, fiscalización, deterioro de calidad, mercado paralelo" }
       ],
       base: { alpha0: 100, alpha1: 2, beta0: -20, beta1: 3 },
-      parametros: { precioTecho: 18 }
+      parametros: { precioTecho: 18 },
+      funciones: "Demanda:  Qd = 100 − 2P\nOferta:   Qs = −20 + 3P\nEquilibrio libre:  100 − 2P = −20 + 3P  →  P* = 24, Q* = 52\nCon P_max = 18 (vinculante: < P*):\n  Qd(18) = 100 − 36 = 64\n  Qs(18) = −20 + 54 = 34   (lado corto)\n  Cantidad transada = Qs = 34     Escasez = Qd − Qs = 30\nε_d = −2·(24/52) = −0.92     ε_s = +3·(24/52) = +1.38"
     }
   ]
 };
@@ -1375,6 +1379,15 @@ function _mlRenderCaso(caso, labels) {
   var renderer = _mlRenderers[caso.tipo];
   var bloqueResultado = renderer ? renderer(caso) : '';
 
+  var funcionesHtml = '';
+  if (caso.funciones) {
+    funcionesHtml = '<details style="margin-top:.75rem;">'
+      + '<summary style="cursor:pointer;font-weight:700;font-size:.92rem;">▶ Funciones del caso y verificación</summary>'
+      + '<pre style="background:#f1f4f8;padding:10px 14px;border-radius:8px;font-size:13px;overflow-x:auto;line-height:1.6;margin:.75rem 0 0;">'
+      + caso.funciones
+      + '</pre></details>';
+  }
+
   // Normalizar: acepta supuestoEnTension (string, legacy) o supuestosEnTension (array)
   var sups = caso.supuestosEnTension
     || (caso.supuestoEnTension ? [{ id: caso.supuestoEnTension }] : []);
@@ -1394,6 +1407,7 @@ function _mlRenderCaso(caso, labels) {
     +   '<h3>' + caso.nombre + '</h3>'
     +   '<p class="ml-politica__contexto">' + caso.contexto + '</p>'
     +   bloqueResultado
+    +   funcionesHtml
     +   supLink
     +   _mlRenderEvidencia(caso.evidencia)
     + '</article>';
